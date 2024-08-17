@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lift and Floor Matrix Visualization</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 80px;
+        }
+        .input-container {
+            display: flex;
+            gap: 10px;
+        }
+        input {
+            width: 50px;
+        }
+        .grid {
+            display: grid;
+            grid-gap: 80px;
+            width: fit-content;
+        }
+        .cell {
+            width: 60px;
+            height: 120px;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .highlighted {
+            background-color: #ffcc00;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        .door {
+            width: 50%;
+            height: 100%;
+            background-color: #333;
+            position: absolute;
+            transition: transform 2.5s ease;
+        }
+        .door.left {
+            left: 0;
+            transform: translateX(0);
+        }
+        .door.right {
+            right: 0;
+            transform: translateX(0);
+        }
+        .open .door.left {
+            transform: translateX(-100%);
+        }
+        .open .door.right {
+            transform: translateX(100%);
+        }
+        .close .door.left {
+            transform: translateX(0);
+        }
+        .close .door.right {
+            transform: translateX(0);
+        }
+        .row-container {
+            display: flex;
+            align-items: center;
+            gap: 20px; /* Adjusted gap */
+        }
+        .floor-label {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .button-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px; /* Adjusted gap for buttons */
+        }
+        .button-container button {
+            width: 60px;
+            height: 30px;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+            border-radius: 5px;
+        }
+        .button-container .up {
+            background-color: green;
+        }
+        .button-container .down {
+            background-color: yellow;
+            color: black; /* Adjust text color for contrast */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="input-container">
+            <label>Floors: <input type="number" id="rowsInput" min="1" value="4"></label>
+            <label>Lifts: <input type="number" id="colsInput" min="1" value="2"></label>
+            <button onclick="generateMatrix()">Generate Matrix</button>
+        </div>
+        <div id="matrixContainer"></div>
+    </div>
+
+    <script>
+        let matrix = [];
+
+        function generateMatrix() {
+            const floors = parseInt(document.getElementById('rowsInput').value);
+            const lifts = parseInt(document.getElementById('colsInput').value);
+
+            matrix = Array(floors).fill().map(() => Array(lifts).fill(0));
+
+            for (let lift = 0; lift < lifts; lift++) {
+                matrix[floors-1][lift] = 1;
+            }
+
+            createMatrixView();
+        }
+
+        function createMatrixView() {
+            const container = document.getElementById('matrixContainer');
+            container.innerHTML = ''; 
+
+            matrix.forEach((row, rowIndex) => {
+                const rowContainer = document.createElement('div');
+                rowContainer.className = 'row-container';
+
+                const buttonContainer = document.createElement('div');
+                buttonContainer.className = 'button-container';
+
+                const floorLabel = document.createElement('div');
+                floorLabel.className = 'floor-label';
+                floorLabel.textContent = `Floor ${matrix.length - rowIndex}`;
+
+                const isTopFloor = rowIndex === 0;
+                const isBottomFloor = rowIndex === matrix.length - 1;
+
+                if (!isTopFloor) {
+                    const upButton = document.createElement('button');
+                    upButton.textContent = 'Up';
+                    upButton.className = 'up';
+                    upButton.onclick = () => handleMoveButtonClick(rowIndex, 'up');
+                    buttonContainer.appendChild(upButton);
+                }
+
+                if (!isBottomFloor) {
+                    const downButton = document.createElement('button');
+                    downButton.textContent = 'Down';
+                    downButton.className = 'down';
+                    downButton.onclick = () => handleMoveButtonClick(rowIndex, 'down');
+                    buttonContainer.appendChild(downButton);
+                }
+
+                const gridContainer = document.createElement('div');
+                gridContainer.className = 'grid';
+                gridContainer.style.gridTemplateColumns = `repeat(${matrix[0].length}, 60px)`;
+
+                row.forEach((cell, colIndex) => {
+                    const cellElement = document.createElement('div');
+                    cellElement.className = 'cell';
+
+                    if (cell === 1) {
+                        const highlightedElement = document.createElement('div');
+                        highlightedElement.className = 'highlighted';
+
+                        const leftDoor = document.createElement('div');
+                        leftDoor.className = 'door left';
+
+                        const rightDoor = document.createElement('div');
+                        rightDoor.className = 'door right';
+
+                        highlightedElement.appendChild(leftDoor);
+                        highlightedElement.appendChild(rightDoor);
+                        cellElement.appendChild(highlightedElement);
+                    }
+
+                    gridContainer.appendChild(cellElement);
+                });
+
+                rowContainer.appendChild(floorLabel);
+                rowContainer.appendChild(buttonContainer);
+                rowContainer.appendChild(gridContainer);
+                container.appendChild(rowContainer);
+            });
+        }
+
+        function handleMoveButtonClick(floorIndex, direction) {
+            const lifts = matrix[0].length;
+            let targetFloorIndex = floorIndex;
+
+            console.log("floos",floorIndex)
+
+            if (direction === 'up' && floorIndex > 0) {
+                targetFloorIndex = floorIndex + 1;
+            } else if (direction === 'down' && floorIndex < matrix.length - 1) {
+                targetFloorIndex = floorIndex -1 ;
+            }
+            console.log("targetFloorIndex",targetFloorIndex)
+
+            if (targetFloorIndex !== floorIndex) {
+                for (let liftIndex = 0; liftIndex < lifts; liftIndex++) {
+                    let currentHighlightedFloor = -1;
+                    for (let floorIndex = 0; floorIndex < matrix.length; floorIndex++) {
+                        if (matrix[floorIndex][liftIndex] === 1) {
+                            currentHighlightedFloor = floorIndex;
+                            break;
+                        }
+                    }
+
+                    if (currentHighlightedFloor !== -1) {
+                        openLiftDoors(currentHighlightedFloor, liftIndex, targetFloorIndex);
+                        break;
+                    }
+                }
+            }
+        }
+
+        function openLiftDoors(floorIndex, liftIndex, targetFloorIndex) {
+            const liftElement = document.querySelector(`.row-container:nth-of-type(${floorIndex + 1}) .grid .cell:nth-of-type(${liftIndex + 1}) .highlighted`);
+            liftElement.classList.add('open');
+
+            liftElement.addEventListener('transitionend', () => {
+                liftElement.classList.remove('open');
+                closeLiftDoors(floorIndex, liftIndex, targetFloorIndex);
+            }, { once: true });
+        }
+
+        function closeLiftDoors(floorIndex, liftIndex, targetFloorIndex) {
+            const liftElement = document.querySelector(`.row-container:nth-of-type(${floorIndex + 1}) .grid .cell:nth-of-type(${liftIndex + 1}) .highlighted`);
+            liftElement.classList.add('close');
+
+            liftElement.addEventListener('transitionend', () => {
+                liftElement.classList.remove('close');
+                setTimeout(() => moveLift(floorIndex, liftIndex, targetFloorIndex, liftIndex), 3000); // Added delay to start lift movement
+            }, { once: true });
+        }
+
+        function moveLift(fromFloor, fromLift, toFloor, toLift) {
+            const fromElement = document.querySelector(`.row-container:nth-of-type(${fromFloor + 1}) .grid .cell:nth-of-type(${fromLift + 1}) .highlighted`);
+            const cellHeight = 120;
+            const distance = (toFloor - fromFloor) * cellHeight;
+
+            fromElement.style.transition = `transform 2.5s ease`;
+            fromElement.style.transform = `translateY(${distance}px)`;
+
+            fromElement.addEventListener('transitionend', () => {
+                matrix[toFloor][toLift] = 1;
+                matrix[fromFloor][fromLift] = 0;
+                createMatrixView();
+            }, { once: true });
+        }
+
+        // Initial matrix generation
+        generateMatrix();
+    </script>
+</body>
+</html>
