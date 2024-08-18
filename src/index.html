@@ -117,6 +117,7 @@
 
     <script>
         let matrix = [];
+        let liftsState= []
 
         function generateMatrix() {
             const floors = parseInt(document.getElementById('rowsInput').value);
@@ -125,9 +126,10 @@
             matrix = Array(floors).fill().map(() => Array(lifts).fill(0));
 
             for (let lift = 0; lift < lifts; lift++) {
-                matrix[floors-1][lift] = 1;
+                matrix[0][lift] = 1;
             }
-
+            liftsState = Array(lifts).fill().map((l,idx)=>({id:idx,isMoving:false,direction:"up"}))
+            console.log(matrix,liftsState)
             createMatrixView();
         }
 
@@ -135,7 +137,7 @@
             const container = document.getElementById('matrixContainer');
             container.innerHTML = ''; 
 
-            matrix.forEach((row, rowIndex) => {
+            matrix.reverse().forEach((row, rowIndex) => {
                 const rowContainer = document.createElement('div');
                 rowContainer.className = 'row-container';
 
@@ -144,7 +146,7 @@
 
                 const floorLabel = document.createElement('div');
                 floorLabel.className = 'floor-label';
-                floorLabel.textContent = `Floor ${matrix.length - rowIndex}`;
+                floorLabel.textContent = `Floor  ${rowIndex}`;
 
                 const isTopFloor = rowIndex === 0;
                 const isBottomFloor = rowIndex === matrix.length - 1;
@@ -199,32 +201,23 @@
         }
 
         function handleMoveButtonClick(floorIndex, direction) {
+            console.log("m1",matrix)
             const lifts = matrix[0].length;
             let targetFloorIndex = floorIndex;
 
-            console.log("floos",floorIndex)
-
-            if (direction === 'up' && floorIndex > 0) {
-                targetFloorIndex = floorIndex + 1;
-            } else if (direction === 'down' && floorIndex < matrix.length - 1) {
-                targetFloorIndex = floorIndex -1 ;
-            }
-            console.log("targetFloorIndex",targetFloorIndex)
-
-            if (targetFloorIndex !== floorIndex) {
-                for (let liftIndex = 0; liftIndex < lifts; liftIndex++) {
-                    let currentHighlightedFloor = -1;
-                    for (let floorIndex = 0; floorIndex < matrix.length; floorIndex++) {
-                        if (matrix[floorIndex][liftIndex] === 1) {
-                            currentHighlightedFloor = floorIndex;
-                            break;
-                        }
-                    }
-
-                    if (currentHighlightedFloor !== -1) {
-                        openLiftDoors(currentHighlightedFloor, liftIndex, targetFloorIndex);
+            for (let liftIndex = 0; liftIndex < lifts; liftIndex++) {
+                let currentHighlightedFloor = -1;
+                for (let floorIndex = 0; floorIndex < matrix.length; floorIndex++) {
+                    if (matrix[floorIndex][liftIndex] === 1) {
+                        currentHighlightedFloor = floorIndex;
                         break;
                     }
+                }
+
+                if (currentHighlightedFloor !== -1 ) {
+                    console.log("currentHighlightedFloor",currentHighlightedFloor, "liftIndex",liftIndex, "targetFloorIndex",targetFloorIndex)
+                    openLiftDoors(currentHighlightedFloor, liftIndex, targetFloorIndex);
+                    break;
                 }
             }
         }
@@ -250,6 +243,11 @@
         }
 
         function moveLift(fromFloor, fromLift, toFloor, toLift) {
+
+            console.log("fromFloor",fromFloor,"->",toFloor)
+            console.log("fromLift",fromLift,"->",toLift)
+
+            if(fromFloor === toFloor) return;
             const fromElement = document.querySelector(`.row-container:nth-of-type(${fromFloor + 1}) .grid .cell:nth-of-type(${fromLift + 1}) .highlighted`);
             const cellHeight = 120;
             const distance = (toFloor - fromFloor) * cellHeight;
@@ -260,6 +258,7 @@
             fromElement.addEventListener('transitionend', () => {
                 matrix[toFloor][toLift] = 1;
                 matrix[fromFloor][fromLift] = 0;
+                matrix = matrix.reverse()
                 createMatrixView();
             }, { once: true });
         }
