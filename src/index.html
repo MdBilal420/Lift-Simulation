@@ -13,13 +13,54 @@
             flex-direction: column;
             align-items: center;
             gap: 80px;
+            
+            width: 900;
+            overflow: scroll;
         }
         .input-container {
             display: flex;
-            gap: 10px;
+            align-items: center;
+            gap: 15px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
-        input {
-            width: 50px;
+
+        .input-container label {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .input-container input {
+            width: 60px;
+            padding: 5px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 1rem;
+            text-align: center;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-container input:focus {
+            border-color: #007bff;
+        }
+
+        .input-container button {
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            transition: background-color 0.3s ease;
+        }
+
+        .input-container button:hover {
+            background-color: #0056b3;
         }
         .grid {
             display: grid;
@@ -76,7 +117,9 @@
         .row-container {
             display: flex;
             align-items: center;
-            gap: 20px; /* Adjusted gap */
+            gap: 20px; 
+            width: 900px;
+            border-bottom: 2px solid #333;
         }
         .floor-label {
             font-weight: bold;
@@ -85,7 +128,8 @@
         .button-container {
             display: flex;
             flex-direction: column;
-            gap: 10px; /* Adjusted gap for buttons */
+            gap: 10px; 
+            margin-top: 50px;
         }
         .button-container button {
             width: 60px;
@@ -101,16 +145,18 @@
         }
         .button-container .down {
             background-color: yellow;
-            color: black; /* Adjust text color for contrast */
+            color: black;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="input-container">
-            <label>Floors: <input type="number" id="rowsInput" min="1" value="4"></label>
-            <label>Lifts: <input type="number" id="colsInput" min="1" value="2"></label>
-            <button onclick="generateMatrix()">Generate Matrix</button>
+            <label for="rowsInput">Floors:</label>
+            <input type="number" id="rowsInput" min="2" value="0">
+            <label for="colsInput">Lifts:</label>
+            <input type="number" id="colsInput" min="1" value="0">
+            <button onclick="generateMatrix()">Generate Lift Simulation</button>
         </div>
         <div id="matrixContainer"></div>
     </div>
@@ -146,7 +192,7 @@
 
                 const floorLabel = document.createElement('div');
                 floorLabel.className = 'floor-label';
-                floorLabel.textContent = `Floor  ${rowIndex}`;
+                floorLabel.textContent = `Floor  ${matrix.length  - rowIndex}`;
 
                 const isTopFloor = rowIndex === 0;
                 const isBottomFloor = rowIndex === matrix.length - 1;
@@ -201,9 +247,12 @@
         }
 
         function handleMoveButtonClick(floorIndex, direction) {
-            console.log("m1",matrix)
+            console.log("m1",matrix)  
             const lifts = matrix[0].length;
             let targetFloorIndex = floorIndex;
+
+            let closestLiftIndex = -1;
+            let minimumDistance = matrix.length; 
 
             for (let liftIndex = 0; liftIndex < lifts; liftIndex++) {
                 let currentHighlightedFloor = -1;
@@ -214,12 +263,20 @@
                     }
                 }
 
-                if (currentHighlightedFloor !== -1 ) {
-                    console.log("currentHighlightedFloor",currentHighlightedFloor, "liftIndex",liftIndex, "targetFloorIndex",targetFloorIndex)
-                    openLiftDoors(currentHighlightedFloor, liftIndex, targetFloorIndex);
-                    break;
+                if (currentHighlightedFloor !== -1) {
+                    const distance = Math.abs(currentHighlightedFloor - targetFloorIndex);
+                    if (distance < minimumDistance) {
+                        minimumDistance = distance;
+                        closestLiftIndex = liftIndex;
+                    }
                 }
             }
+
+            if (closestLiftIndex !== -1) {
+                const closestLiftFloor = matrix.findIndex(row => row[closestLiftIndex] === 1);
+                openLiftDoors(closestLiftFloor, closestLiftIndex, targetFloorIndex);
+            }
+
         }
 
         function openLiftDoors(floorIndex, liftIndex, targetFloorIndex) {
