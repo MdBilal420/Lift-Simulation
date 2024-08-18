@@ -14,7 +14,7 @@
             align-items: center;
             gap: 80px;
             
-            width: 900;
+            width: 600;
             overflow: scroll;
         }
         .input-container {
@@ -118,7 +118,7 @@
             display: flex;
             align-items: center;
             gap: 20px; 
-            width: 900px;
+            width: 600px;
             border-bottom: 2px solid #333;
         }
         .floor-label {
@@ -164,6 +164,7 @@
     <script>
         let matrix = [];
         let liftsState= {}
+        let queue = []
 
         function generateMatrix() {
             const floors = parseInt(document.getElementById('rowsInput').value);
@@ -182,7 +183,7 @@
         function createMatrixView() {
             const container = document.getElementById('matrixContainer');
             container.innerHTML = ''; 
-
+console.log("liftsstat",liftsState,queue)
             matrix.reverse().forEach((row, rowIndex) => {
                 const rowContainer = document.createElement('div');
                 rowContainer.className = 'row-container';
@@ -273,6 +274,7 @@
 
             if (closestLiftIndex !== -1) {
                 liftsState[closestLiftIndex] = true
+                queue.push(closestLiftIndex)
                 const closestLiftFloor = matrix.findIndex(row => row[closestLiftIndex] === 1);
                 openLiftDoors(closestLiftFloor, closestLiftIndex, targetFloorIndex);
             }
@@ -302,7 +304,7 @@
         function moveLift(fromFloor, fromLift, toFloor, toLift) {
 
             // console.log("fromFloor",fromFloor,"->",toFloor)
-            // console.log("fromLift",fromLift,"->",toLift)
+            console.log("fromLift",fromLift,"->",toLift)
 
             if(fromFloor === toFloor) return;
             const fromElement = document.querySelector(`.row-container:nth-of-type(${fromFloor + 1}) .grid .cell:nth-of-type(${fromLift + 1}) .highlighted`);
@@ -311,12 +313,14 @@
 
             fromElement.style.transition = `transform 2.5s ease`;
             fromElement.style.transform = `translateY(${distance}px)`;
-
+            
             fromElement.addEventListener('transitionend', () => {
                 matrix[toFloor][toLift] = 1;
                 matrix[fromFloor][fromLift] = 0;
                 matrix = matrix.reverse()
-                createMatrixView();
+                liftsState[fromLift] = false
+                queue.shift()
+                 createMatrixView();
             }, { once: true });
         }
 
