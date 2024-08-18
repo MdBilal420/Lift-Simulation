@@ -153,9 +153,9 @@
     <div class="container">
         <div class="input-container">
             <label for="rowsInput">Floors:</label>
-            <input type="number" id="rowsInput" min="2" value="0">
+            <input type="number" id="rowsInput" min="2" value="4">
             <label for="colsInput">Lifts:</label>
-            <input type="number" id="colsInput" min="1" value="0">
+            <input type="number" id="colsInput" min="1" value="2">
             <button onclick="generateMatrix()">Generate Lift Simulation</button>
         </div>
         <div id="matrixContainer"></div>
@@ -163,7 +163,7 @@
 
     <script>
         let matrix = [];
-        let liftsState= []
+        let liftsState= {}
 
         function generateMatrix() {
             const floors = parseInt(document.getElementById('rowsInput').value);
@@ -174,7 +174,7 @@
             for (let lift = 0; lift < lifts; lift++) {
                 matrix[0][lift] = 1;
             }
-            liftsState = Array(lifts).fill().map((l,idx)=>({id:idx,isMoving:false,direction:"up"}))
+           // liftsState = Array(lifts).fill().map((l,idx)=>({id:idx,isMoving:false,direction:"up"}))
             console.log(matrix,liftsState)
             createMatrixView();
         }
@@ -247,7 +247,6 @@
         }
 
         function handleMoveButtonClick(floorIndex, direction) {
-            console.log("m1",matrix)  
             const lifts = matrix[0].length;
             let targetFloorIndex = floorIndex;
 
@@ -265,7 +264,7 @@
 
                 if (currentHighlightedFloor !== -1) {
                     const distance = Math.abs(currentHighlightedFloor - targetFloorIndex);
-                    if (distance < minimumDistance) {
+                    if (distance < minimumDistance && !liftsState[liftIndex]) {
                         minimumDistance = distance;
                         closestLiftIndex = liftIndex;
                     }
@@ -273,6 +272,7 @@
             }
 
             if (closestLiftIndex !== -1) {
+                liftsState[closestLiftIndex] = true
                 const closestLiftFloor = matrix.findIndex(row => row[closestLiftIndex] === 1);
                 openLiftDoors(closestLiftFloor, closestLiftIndex, targetFloorIndex);
             }
@@ -301,8 +301,8 @@
 
         function moveLift(fromFloor, fromLift, toFloor, toLift) {
 
-            console.log("fromFloor",fromFloor,"->",toFloor)
-            console.log("fromLift",fromLift,"->",toLift)
+            // console.log("fromFloor",fromFloor,"->",toFloor)
+            // console.log("fromLift",fromLift,"->",toLift)
 
             if(fromFloor === toFloor) return;
             const fromElement = document.querySelector(`.row-container:nth-of-type(${fromFloor + 1}) .grid .cell:nth-of-type(${fromLift + 1}) .highlighted`);
