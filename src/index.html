@@ -248,15 +248,20 @@ console.log("liftsstat",liftsState,queue)
             });
         }
 
-        async function handleMoveButtonClick(floorIndex, direction) {
+    async function handleMoveButtonClick(floorIndex, direction) {
+        console.log("matrix on click",matrix)
     const lifts = matrix[0].length;
-    if (queue.length === lifts) return;
+    if (queue.length === lifts) {
+        console.log("lift busy")
+        return;
+    }
     let targetFloorIndex = floorIndex;
 
     let closestLiftIndex = await findClosestAvailableLift(targetFloorIndex);
 
     if (closestLiftIndex !== -1) {
         const closestLiftFloor = matrix.findIndex(row => row[closestLiftIndex] === 1);
+
         await moveLiftSequence(closestLiftFloor, closestLiftIndex, targetFloorIndex);
     }
 }
@@ -295,7 +300,9 @@ async function moveLiftSequence(fromFloor, liftIndex, toFloor) {
 
 function openLiftDoors(floorIndex, liftIndex) {
     return new Promise(resolve => {
-        const liftElement = document.querySelector(`.row-container:nth-of-type(${floorIndex + 1}) .grid .cell:nth-of-type(${liftIndex + 1}) .highlighted`);
+        console.log("openlift",floorIndex,liftIndex,liftsState,queue)
+        const liftNumber = liftIndex >=matrix[0].length ?liftIndex  : liftIndex + 1
+        const liftElement = document.querySelector(`.row-container:nth-of-type(${floorIndex + 1}) .grid .cell:nth-of-type(${liftNumber}) .highlighted`);
         liftElement.classList.add('open');
 
         liftElement.addEventListener('transitionend', () => {
@@ -307,6 +314,7 @@ function openLiftDoors(floorIndex, liftIndex) {
 
 function closeLiftDoors(floorIndex, liftIndex) {
     return new Promise(resolve => {
+        //const liftNumber = liftIndex +1 >=matrix[0].length ?0 : liftIndex + 1
         const liftElement = document.querySelector(`.row-container:nth-of-type(${floorIndex + 1}) .grid .cell:nth-of-type(${liftIndex + 1}) .highlighted`);
         liftElement.classList.add('close');
 
@@ -320,16 +328,19 @@ function closeLiftDoors(floorIndex, liftIndex) {
 function moveLift(fromFloor, fromLift, toFloor) {
     return new Promise(resolve => {
         if (fromFloor === toFloor) {
+            liftsState[fromLift] = false
+            queue.shift()
             resolve();
             return;
         }
 
         const fromElement = document.querySelector(`.row-container:nth-of-type(${fromFloor + 1}) .grid .cell:nth-of-type(${fromLift + 1}) .highlighted`);
         const cellHeight = 120;
-        const distance = (toFloor - fromFloor) * cellHeight;
+        const distance = Math.abs(toFloor - fromFloor);
+        const floorDistance = (toFloor - fromFloor) * cellHeight;
 
-        fromElement.style.transition = `transform 2.5s ease`;
-        fromElement.style.transform = `translateY(${distance}px)`;
+        fromElement.style.transition = `transform ${distance}s ease`;
+        fromElement.style.transform = `translateY(${floorDistance}px)`;
         
         fromElement.addEventListener('transitionend', () => {
             matrix[toFloor][fromLift] = 1;
@@ -339,6 +350,7 @@ function moveLift(fromFloor, fromLift, toFloor) {
 
             if (queue.length === 0) {
                 matrix = matrix.reverse();
+                console.log("matrix",matrix)
                 createMatrixView();
             }
             resolve();
