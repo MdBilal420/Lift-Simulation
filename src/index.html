@@ -167,18 +167,19 @@
         let queue = []
 
         function generateMatrix() {
-            const floors = parseInt(document.getElementById('rowsInput').value);
-            const lifts = parseInt(document.getElementById('colsInput').value);
+    const floors = parseInt(document.getElementById('rowsInput').value);
+    const lifts = parseInt(document.getElementById('colsInput').value);
 
-            matrix = Array(floors).fill().map(() => Array(lifts).fill(0));
+    matrix = Array(floors).fill().map(() => Array(lifts).fill(0));
 
-            for (let lift = 0; lift < lifts; lift++) {
-                matrix[0][lift] = 1;
-            }
-           // liftsState = Array(lifts).fill().map((l,idx)=>({id:idx,isMoving:false,direction:"up"}))
-            console.log(matrix,liftsState)
-            createMatrixView();
-        }
+    for (let lift = 0; lift < lifts; lift++) {
+        matrix[0][lift] = 1;
+        liftsState[lift] = false;
+    }
+    
+    queue = [];
+    createMatrixView();
+}
 
         function createMatrixView() {
             const container = document.getElementById('matrixContainer');
@@ -247,85 +248,106 @@ console.log("liftsstat",liftsState,queue)
             });
         }
 
-        function handleMoveButtonClick(floorIndex, direction) {
-            const lifts = matrix[0].length;
-            let targetFloorIndex = floorIndex;
+        async function handleMoveButtonClick(floorIndex, direction) {
+    const lifts = matrix[0].length;
+    if (queue.length === lifts) return;
+    let targetFloorIndex = floorIndex;
 
-            let closestLiftIndex = -1;
-            let minimumDistance = matrix.length; 
+    let closestLiftIndex = await findClosestAvailableLift(targetFloorIndex);
 
-            for (let liftIndex = 0; liftIndex < lifts; liftIndex++) {
-                let currentHighlightedFloor = -1;
-                for (let floorIndex = 0; floorIndex < matrix.length; floorIndex++) {
-                    if (matrix[floorIndex][liftIndex] === 1) {
-                        currentHighlightedFloor = floorIndex;
-                        break;
-                    }
-                }
+    if (closestLiftIndex !== -1) {
+        const closestLiftFloor = matrix.findIndex(row => row[closestLiftIndex] === 1);
+        await moveLiftSequence(closestLiftFloor, closestLiftIndex, targetFloorIndex);
+    }
+}
 
-                if (currentHighlightedFloor !== -1) {
-                    const distance = Math.abs(currentHighlightedFloor - targetFloorIndex);
-                    if (distance < minimumDistance && !liftsState[liftIndex]) {
-                        minimumDistance = distance;
-                        closestLiftIndex = liftIndex;
-                    }
-                }
+async function findClosestAvailableLift(targetFloorIndex) {
+    let closestLiftIndex = -1;
+    let minimumDistance = matrix.length;
+
+    for (let liftIndex = 0; liftIndex < matrix[0].length; liftIndex++) {
+        if (liftsState[liftIndex]) continue;
+
+        let currentHighlightedFloor = matrix.findIndex(row => row[liftIndex] === 1);
+
+        if (currentHighlightedFloor !== -1) {
+            const distance = Math.abs(currentHighlightedFloor - targetFloorIndex);
+            if (distance < minimumDistance) {
+                minimumDistance = distance;
+                closestLiftIndex = liftIndex;
             }
+        }
+    }
 
-            if (closestLiftIndex !== -1) {
-                liftsState[closestLiftIndex] = true
-                queue.push(closestLiftIndex)
-                const closestLiftFloor = matrix.findIndex(row => row[closestLiftIndex] === 1);
-                openLiftDoors(closestLiftFloor, closestLiftIndex, targetFloorIndex);
+    if (closestLiftIndex !== -1) {
+        liftsState[closestLiftIndex] = true;
+        queue.push(closestLiftIndex);
+    }
+
+    return closestLiftIndex;
+}
+
+async function moveLiftSequence(fromFloor, liftIndex, toFloor) {
+    await openLiftDoors(fromFloor, liftIndex);
+    await closeLiftDoors(fromFloor, liftIndex);
+    await moveLift(fromFloor, liftIndex, toFloor);
+}
+
+function openLiftDoors(floorIndex, liftIndex) {
+    return new Promise(resolve => {
+        const liftElement = document.querySelector(`.row-container:nth-of-type(${floorIndex + 1}) .grid .cell:nth-of-type(${liftIndex + 1}) .highlighted`);
+        liftElement.classList.add('open');
+
+        liftElement.addEventListener('transitionend', () => {
+            liftElement.classList.remove('open');
+            resolve();
+        }, { once: true });
+    });
+}
+
+function closeLiftDoors(floorIndex, liftIndex) {
+    return new Promise(resolve => {
+        const liftElement = document.querySelector(`.row-container:nth-of-type(${floorIndex + 1}) .grid .cell:nth-of-type(${liftIndex + 1}) .highlighted`);
+        liftElement.classList.add('close');
+
+        liftElement.addEventListener('transitionend', () => {
+            liftElement.classList.remove('close');
+            setTimeout(resolve, 3000); // Added delay to start lift movement
+        }, { once: true });
+    });
+}
+
+function moveLift(fromFloor, fromLift, toFloor) {
+    return new Promise(resolve => {
+        if (fromFloor === toFloor) {
+            resolve();
+            return;
+        }
+
+        const fromElement = document.querySelector(`.row-container:nth-of-type(${fromFloor + 1}) .grid .cell:nth-of-type(${fromLift + 1}) .highlighted`);
+        const cellHeight = 120;
+        const distance = (toFloor - fromFloor) * cellHeight;
+
+        fromElement.style.transition = `transform 2.5s ease`;
+        fromElement.style.transform = `translateY(${distance}px)`;
+        
+        fromElement.addEventListener('transitionend', () => {
+            matrix[toFloor][fromLift] = 1;
+            matrix[fromFloor][fromLift] = 0;
+            liftsState[fromLift] = false;
+            queue.shift();
+
+            if (queue.length === 0) {
+                matrix = matrix.reverse();
+                createMatrixView();
             }
+            resolve();
+        }, { once: true });
+    });
+}
 
-        }
-
-        function openLiftDoors(floorIndex, liftIndex, targetFloorIndex) {
-            const liftElement = document.querySelector(`.row-container:nth-of-type(${floorIndex + 1}) .grid .cell:nth-of-type(${liftIndex + 1}) .highlighted`);
-            liftElement.classList.add('open');
-
-            liftElement.addEventListener('transitionend', () => {
-                liftElement.classList.remove('open');
-                closeLiftDoors(floorIndex, liftIndex, targetFloorIndex);
-            }, { once: true });
-        }
-
-        function closeLiftDoors(floorIndex, liftIndex, targetFloorIndex) {
-            const liftElement = document.querySelector(`.row-container:nth-of-type(${floorIndex + 1}) .grid .cell:nth-of-type(${liftIndex + 1}) .highlighted`);
-            liftElement.classList.add('close');
-
-            liftElement.addEventListener('transitionend', () => {
-                liftElement.classList.remove('close');
-                setTimeout(() => moveLift(floorIndex, liftIndex, targetFloorIndex, liftIndex), 3000); // Added delay to start lift movement
-            }, { once: true });
-        }
-
-        function moveLift(fromFloor, fromLift, toFloor, toLift) {
-
-            // console.log("fromFloor",fromFloor,"->",toFloor)
-            console.log("fromLift",fromLift,"->",toLift)
-
-            if(fromFloor === toFloor) return;
-            const fromElement = document.querySelector(`.row-container:nth-of-type(${fromFloor + 1}) .grid .cell:nth-of-type(${fromLift + 1}) .highlighted`);
-            const cellHeight = 120;
-            const distance = (toFloor - fromFloor) * cellHeight;
-
-            fromElement.style.transition = `transform 2.5s ease`;
-            fromElement.style.transform = `translateY(${distance}px)`;
-            
-            fromElement.addEventListener('transitionend', () => {
-                matrix[toFloor][toLift] = 1;
-                matrix[fromFloor][fromLift] = 0;
-                matrix = matrix.reverse()
-                liftsState[fromLift] = false
-                queue.shift()
-                 createMatrixView();
-            }, { once: true });
-        }
-
-        // Initial matrix generation
-        generateMatrix();
+// Initial matrix generation
+generateMatrix();
     </script>
 </body>
 </html>
