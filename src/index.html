@@ -300,7 +300,8 @@ async function moveLiftSequence(fromFloor, liftIndex, toFloor) {
 
 function openLiftDoors(floorIndex, liftIndex) {
     return new Promise(resolve => {
-        console.log("openlift",floorIndex,liftIndex,liftsState,queue)
+        try {
+            console.log("openlift",floorIndex,liftIndex,liftsState,queue)
         const liftNumber = liftIndex >=matrix[0].length ?liftIndex  : liftIndex + 1
         const liftElement = document.querySelector(`.row-container:nth-of-type(${floorIndex + 1}) .grid .cell:nth-of-type(${liftNumber}) .highlighted`);
         liftElement.classList.add('open');
@@ -309,6 +310,14 @@ function openLiftDoors(floorIndex, liftIndex) {
             liftElement.classList.remove('open');
             resolve();
         }, { once: true });
+        } catch (error) {
+            queue = []
+            for(let l=0;l<matrix[0].length;l++){
+                liftsState[l] = false
+            }
+            console.log("error",error)
+        }
+        
     });
 }
 
