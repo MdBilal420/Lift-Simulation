@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Floor, Multi-Lift Elevator System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .elevator-system {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            width: 900px;
+        }
+        .elevator-container {
+            display: flex;
+            align-items: flex-end;
+            
+        }
+        .buttons {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            margin-right: 20px;
+        }
+        .floor {
+            display: flex;
+            align-items: center;
+            margin: 20px 0;
+        }
+        .elevator-shafts {
+            display: flex;
+            align-items: flex-end;
+            margin-bottom: 20px;
+        }
+        .elevator-shaft {
+            width: 60px;
+            height: 500px;
+            position: relative;
+            margin: 0 10px;
+        }
+        .elevator {
+            width: 50px;
+            height: 50px;
+            background-color: #333;
+            position: absolute;
+            bottom: 5px;
+            left: 5px;
+            overflow: hidden;
+        }
+        .elevator .door {
+            width: 25px;
+            height: 100%;
+            background-color: #666;
+            position: absolute;
+            top: 0;
+            transition: width 2.5s ease-in-out;
+        }
+        .elevator .door.left {
+            left: 0;
+        }
+        .elevator .door.right {
+            right: 0;
+        }
+        button {
+            margin: 5px;
+            padding: 5px 10px;
+            cursor: pointer;
+            width: 80px;
+        }
+        .up-button {
+            background-color: green;
+            color: white;
+        }
+        .down-button {
+            background-color: yellow;
+            color: black;
+        }
+        .floor-label {
+            font-weight: bold;
+            margin-right: 10px;
+            width: 30px;
+            text-align: right;
+        }
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .controls input {
+            width: 100px;
+            padding: 5px;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="elevator-system">
+        <div class="controls">
+            <input type="number" id="numFloorsInput" placeholder="Number of Floors" min="1" value="8">
+            <input type="number" id="numLiftsInput" placeholder="Number of Lifts" min="1" value="8">
+            <button onclick="generateElevatorSystem()">Generate</button>
+        </div>
+        <div id="elevatorContainer" class="elevator-container">
+            <div class="buttons" id="floorButtons"></div>
+            <div class="elevator-shafts" id="elevatorShafts"></div>
+        </div>
+    </div>
+
+    <script>
+        function generateElevatorSystem() {
+            const numFloors = parseInt(document.getElementById('numFloorsInput').value);
+            const numLifts = parseInt(document.getElementById('numLiftsInput').value);
+            const floorHeight = 80;
+
+            const elevators = [];
+            const buttonContainers = document.getElementById('floorButtons');
+            const shaftsContainer = document.getElementById('elevatorShafts');
+
+            // Clear previous content
+            buttonContainers.innerHTML = '';
+            shaftsContainer.innerHTML = '';
+
+            // Create floors and buttons (Floor 0 is at the bottom)
+            for (let i = numFloors - 1; i >= 0; i--) {
+                const floor = document.createElement('div');
+                floor.className = 'floor';
+
+                const label = document.createElement('div');
+                label.className = 'floor-label';
+                label.textContent = `F${i}`;
+                floor.appendChild(label);
+
+                const upButton = document.createElement('button');
+                upButton.className = 'up-button';
+                upButton.textContent = 'Up';
+                upButton.onclick = () => callElevator(i);
+                floor.appendChild(upButton);
+
+                const downButton = document.createElement('button');
+                downButton.className = 'down-button';
+                downButton.textContent = 'Down';
+                downButton.onclick = () => callElevator(i);
+                floor.appendChild(downButton);
+
+                buttonContainers.appendChild(floor);
+            }
+
+            // Create elevator shafts and elevators
+            for (let i = 0; i < numLifts; i++) {
+                const shaft = document.createElement('div');
+                shaft.className = 'elevator-shaft';
+
+                const elevator = document.createElement('div');
+                elevator.className = 'elevator';
+
+                const leftDoor = document.createElement('div');
+                leftDoor.className = 'door left';
+                const rightDoor = document.createElement('div');
+                rightDoor.className = 'door right';
+
+                elevator.appendChild(leftDoor);
+                elevator.appendChild(rightDoor);
+                shaft.appendChild(elevator);
+
+                shaftsContainer.appendChild(shaft);
+                elevators.push({ element: elevator, currentFloor: 0,targetFloor:0, busy: false });
+            }
+
+            function callElevator(targetFloor) {
+                const availableElevators = elevators.filter(e => !e.busy);
+                const elevatorsOnTargetFloor = elevators.filter(e => e.currentFloor === targetFloor);
+
+                console.log("targey",targetFloor,elevators,availableElevators,elevatorsOnTargetFloor)
+
+                // If 2 elevators are already on the target floor, do nothing
+                if (targetFloor !== 0 && elevatorsOnTargetFloor.length >= 2) {
+                    handleDoors(elevatorsOnTargetFloor[0])
+                    return;
+                }
+
+                if (availableElevators.length > 0) {
+                    const closestElevator = availableElevators.reduce((closest, current) => {
+                        const closestDistance = Math.abs(closest.currentFloor - targetFloor);
+                        const currentDistance = Math.abs(current.currentFloor - targetFloor);
+                        return currentDistance < closestDistance ? current : closest;
+                    });
+                    moveElevator(closestElevator, targetFloor);
+                }
+            }
+
+            function moveElevator(elevator, targetFloor) {
+                elevator.busy = true;
+                const duration = Math.abs(elevator.currentFloor - targetFloor) * 2; // 2 seconds per floor
+                elevator.element.style.transition = `bottom ${duration}s ease-in-out`;
+                elevator.element.style.bottom = `${targetFloor * floorHeight + 5}px`;
+
+                setTimeout(() => {
+                    // Elevator reached the target floor
+                    elevator.currentFloor = targetFloor;
+                    handleDoors(elevator);
+                }, duration * 1000);
+            }
+
+            function handleDoors(elevator) {
+                const leftDoor = elevator.element.querySelector('.door.left');
+                const rightDoor = elevator.element.querySelector('.door.right');
+
+                // Open doors
+                leftDoor.style.width = '0';
+                rightDoor.style.width = '0';
+
+                // Close doors after 2.5 seconds (door open duration)
+                setTimeout(() => {
+                    leftDoor.style.width = '25px';
+                    rightDoor.style.width = '25px';
+
+                    // Mark the elevator as available after the doors have closed
+                    setTimeout(() => {
+                        elevator.busy = false;
+                    }, 2500); // 2.5 seconds for door closing
+                }, 2500); // 2.5 seconds for door open
+            }
+        }
+
+        // Initial call to generate the system based on default values
+        generateElevatorSystem();
+    </script>
+</body>
+</html>
