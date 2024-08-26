@@ -3,393 +3,271 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lift and Floor Matrix Visualization</title>
+    <title>Lift Simulation</title>
     <style>
         body {
             font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
         }
-        .container {
+        .elevator-system {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            width: 900px;
+        }
+        .elevator-container {
+            display: flex;
+            align-items: flex-end;
+            
+        }
+        .buttons {
             display: flex;
             flex-direction: column;
-            align-items: center;
-            gap: 80px;
-            
-            width: 600;
-            overflow: scroll;
+            justify-content: space-between;
+            margin-right: 20px;
         }
-        .input-container {
+        .floor {
             display: flex;
             align-items: center;
-            gap: 15px;
-            padding: 20px;
-            background-color: #fff;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin: 20px 0;
         }
-
-        .input-container label {
-            font-weight: bold;
-            color: #333;
+        .elevator-shafts {
+            display: flex;
+            align-items: flex-end;
+            margin-bottom: 20px;
         }
-
-        .input-container input {
+        .elevator-shaft {
             width: 60px;
-            padding: 5px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            font-size: 1rem;
-            text-align: center;
-            outline: none;
-            transition: border-color 0.3s ease;
-        }
-
-        .input-container input:focus {
-            border-color: #007bff;
-        }
-
-        .input-container button {
-            padding: 10px 15px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 1rem;
-            transition: background-color 0.3s ease;
-        }
-
-        .input-container button:hover {
-            background-color: #0056b3;
-        }
-        .grid {
-            display: grid;
-            grid-gap: 80px;
-            width: fit-content;
-        }
-        .cell {
-            width: 60px;
-            height: 120px;
+            height: 500px;
             position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            margin: 0 10px;
         }
-        .highlighted {
-            background-color: #ffcc00;
-            font-weight: bold;
-            position: absolute;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-        }
-        .door {
-            width: 50%;
-            height: 100%;
+        .elevator {
+            width: 50px;
+            height: 50px;
             background-color: #333;
             position: absolute;
-            transition: transform 2.5s ease;
+            bottom: 5px;
+            left: 5px;
+            overflow: hidden;
         }
-        .door.left {
+        .elevator .door {
+            width: 25px;
+            height: 100%;
+            background-color: #666;
+            position: absolute;
+            top: 0;
+            transition: width 2.5s ease-in-out;
+        }
+        .elevator .door.left {
             left: 0;
-            transform: translateX(0);
         }
-        .door.right {
+        .elevator .door.right {
             right: 0;
-            transform: translateX(0);
         }
-        .open .door.left {
-            transform: translateX(-100%);
+        button {
+            margin: 5px;
+            padding: 5px 10px;
+            cursor: pointer;
+            width: 80px;
         }
-        .open .door.right {
-            transform: translateX(100%);
+        .up-button {
+            background-color: green;
+            color: white;
         }
-        .close .door.left {
-            transform: translateX(0);
-        }
-        .close .door.right {
-            transform: translateX(0);
-        }
-        .row-container {
-            display: flex;
-            align-items: center;
-            gap: 20px; 
-            width: 600px;
-            border-bottom: 2px solid #333;
+        .down-button {
+            background-color: yellow;
+            color: black;
         }
         .floor-label {
             font-weight: bold;
             margin-right: 10px;
+            width: 30px;
+            text-align: right;
         }
-        .button-container {
+        .controls {
             display: flex;
-            flex-direction: column;
-            gap: 10px; 
-            margin-top: 50px;
-        }
-        .button-container button {
-            width: 60px;
-            height: 30px;
-            border: none;
-            color: white;
-            cursor: pointer;
-            font-weight: bold;
+            justify-content: space-around;
+            margin-top: 40px;
+            background-color: #f5f5f5;
+            padding: 15px;
             border-radius: 5px;
         }
-        .button-container .up {
-            background-color: green;
+        .controls input {
+            width: 150px;
+            padding: 8px;
+            margin-right: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
         }
-        .button-container .down {
-            background-color: yellow;
-            color: black;
+        .controls button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        .controls button:hover {
+            background-color: #45a049;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="input-container">
-            <label for="rowsInput">Floors:</label>
-            <input type="number" id="rowsInput" min="2" value="">
-            <label for="colsInput">Lifts:</label>
-            <input type="number" id="colsInput" min="1" value="">
-            <button onclick="generateMatrix()">Generate Lift Simulation</button>
+    <div class="elevator-system">
+        <div class="controls">
+            <input type="number" id="numFloorsInput" placeholder="Number of Floors" min="1" value="0">
+            <input type="number" id="numLiftsInput" placeholder="Number of Lifts" min="1" value="0">
+            <button onclick="generateElevatorSystem()">Generate</button>
         </div>
-        <div id="matrixContainer"></div>
+        <div id="elevatorContainer" class="elevator-container">
+            <div class="buttons" id="floorButtons"></div>
+            <div class="elevator-shafts" id="elevatorShafts"></div>
+        </div>
     </div>
 
     <script>
-        let matrix = [];
-        let liftsState= {}
-        let queue = []
+        function generateElevatorSystem() {
+            const numFloors = parseInt(document.getElementById('numFloorsInput').value);
+            const numLifts = parseInt(document.getElementById('numLiftsInput').value);
+            const floorHeight = 80;
 
-        function generateMatrix() {
-    const floors = parseInt(document.getElementById('rowsInput').value);
-    const lifts = parseInt(document.getElementById('colsInput').value);
+            const elevators = [];
+            const buttonContainers = document.getElementById('floorButtons');
+            const shaftsContainer = document.getElementById('elevatorShafts');
 
-    if(floors < 0 || lifts <0) alert("Floors or Lifts can not be negative")
+            // Clear previous content
+            buttonContainers.innerHTML = '';
+            shaftsContainer.innerHTML = '';
 
-    matrix = Array(floors).fill().map(() => Array(lifts).fill(0));
+            // Create floors and buttons (Floor 0 is at the bottom)
+            for (let i = numFloors - 1; i >= 0; i--) {
+                const floor = document.createElement('div');
+                floor.className = 'floor';
 
-    for (let lift = 0; lift < lifts; lift++) {
-        matrix[0][lift] = 1;
-        liftsState[lift] = false;
-    }
-    
-    queue = [];
-    createMatrixView();
-}
+                const label = document.createElement('div');
+                label.className = 'floor-label';
+                label.textContent = `F${i}`;
+                floor.appendChild(label);
 
-        function createMatrixView() {
-            const container = document.getElementById('matrixContainer');
-            container.innerHTML = ''; 
-console.log("liftsstat",liftsState,queue)
-            matrix.reverse().forEach((row, rowIndex) => {
-                const rowContainer = document.createElement('div');
-                rowContainer.className = 'row-container';
+                const upButton = document.createElement('button');
+                upButton.className = 'up-button';
+                upButton.textContent = 'Up';
+                upButton.onclick = () => callElevator(i);
+                floor.appendChild(upButton);
 
-                const buttonContainer = document.createElement('div');
-                buttonContainer.className = 'button-container';
+                const downButton = document.createElement('button');
+                downButton.className = 'down-button';
+                downButton.textContent = 'Down';
+                downButton.onclick = () => callElevator(i);
+                floor.appendChild(downButton);
 
-                const floorLabel = document.createElement('div');
-                floorLabel.className = 'floor-label';
-                floorLabel.textContent = `Floor  ${matrix.length  - rowIndex}`;
+                buttonContainers.appendChild(floor);
+            }
 
-                const isTopFloor = rowIndex === 0;
-                const isBottomFloor = rowIndex === matrix.length - 1;
+            // Create elevator shafts and elevators
+            for (let i = 0; i < numLifts; i++) {
+                const shaft = document.createElement('div');
+                shaft.className = 'elevator-shaft';
 
-                if (!isTopFloor) {
-                    const upButton = document.createElement('button');
-                    upButton.textContent = 'Up';
-                    upButton.className = 'up';
-                    upButton.onclick = () => handleMoveButtonClick(rowIndex, 'up');
-                    buttonContainer.appendChild(upButton);
+                const elevator = document.createElement('div');
+                elevator.className = 'elevator';
+
+                const leftDoor = document.createElement('div');
+                leftDoor.className = 'door left';
+                const rightDoor = document.createElement('div');
+                rightDoor.className = 'door right';
+
+                elevator.appendChild(leftDoor);
+                elevator.appendChild(rightDoor);
+                shaft.appendChild(elevator);
+
+                shaftsContainer.appendChild(shaft);
+                elevators.push({ element: elevator, currentFloor: 0,targetFloor:0, busy: false });
+            }
+
+            function callElevator(targetFloor) {
+                const availableElevators = elevators.filter(e => !e.busy);
+                const elevatorsOnTargetFloor = elevators.filter(e => e.currentFloor === targetFloor);
+
+                const elevatorsOnTargetFloorWithTarget = elevators.filter(e => e.targetFloor === targetFloor)
+
+                if(elevatorsOnTargetFloorWithTarget.length >= 2){
+                    return;
                 }
 
-                if (!isBottomFloor) {
-                    const downButton = document.createElement('button');
-                    downButton.textContent = 'Down';
-                    downButton.className = 'down';
-                    downButton.onclick = () => handleMoveButtonClick(rowIndex, 'down');
-                    buttonContainer.appendChild(downButton);
+                console.log("targey",targetFloor,elevators,availableElevators,elevatorsOnTargetFloor,elevatorsOnTargetFloorWithTarget)
+
+
+
+                // If 2 elevators are already on the target floor, do nothing
+                if (targetFloor !== 0 && elevatorsOnTargetFloor.length >= 2) {
+                    const currentElevator = elevatorsOnTargetFloor[0]
+                    currentElevator.busy = true
+                    handleDoors(currentElevator)
+                    return;
                 }
 
-                const gridContainer = document.createElement('div');
-                gridContainer.className = 'grid';
-                gridContainer.style.gridTemplateColumns = `repeat(${matrix[0].length}, 60px)`;
+                if (availableElevators.length > 0) {
+                    const closestElevator = availableElevators.reduce((closest, current) => {
+                        const closestDistance = Math.abs(closest.currentFloor - targetFloor);
+                        const currentDistance = Math.abs(current.currentFloor - targetFloor);
+                        return currentDistance < closestDistance ? current : closest;
+                    });
+                    moveElevator(closestElevator, targetFloor);
+                }
+            }
 
-                row.forEach((cell, colIndex) => {
-                    const cellElement = document.createElement('div');
-                    cellElement.className = 'cell';
+            function moveElevator(elevator, targetFloor) {
+                elevator.busy = true;
+                elevator.targetFloor = targetFloor
+                const duration = Math.abs(elevator.currentFloor - targetFloor) * 2; // 2 seconds per floor
+                elevator.element.style.transition = `bottom ${duration}s ease-in-out`;
+                elevator.element.style.bottom = `${targetFloor * floorHeight + 5}px`;
 
-                    if (cell === 1) {
-                        const highlightedElement = document.createElement('div');
-                        highlightedElement.className = 'highlighted';
+                setTimeout(() => {
+                    // Elevator reached the target floor
+                    elevator.currentFloor = targetFloor;
+                    handleDoors(elevator);
+                }, duration * 1000);
+            }
 
-                        const leftDoor = document.createElement('div');
-                        leftDoor.className = 'door left';
+            function handleDoors(elevator) {
+                const leftDoor = elevator.element.querySelector('.door.left');
+                const rightDoor = elevator.element.querySelector('.door.right');
 
-                        const rightDoor = document.createElement('div');
-                        rightDoor.className = 'door right';
+                // Open doors
+                leftDoor.style.width = '0';
+                rightDoor.style.width = '0';
 
-                        highlightedElement.appendChild(leftDoor);
-                        highlightedElement.appendChild(rightDoor);
-                        cellElement.appendChild(highlightedElement);
-                    }
+                // Close doors after 2.5 seconds (door open duration)
+                setTimeout(() => {
+                    leftDoor.style.width = '25px';
+                    rightDoor.style.width = '25px';
 
-                    gridContainer.appendChild(cellElement);
-                });
-
-                rowContainer.appendChild(floorLabel);
-                rowContainer.appendChild(buttonContainer);
-                rowContainer.appendChild(gridContainer);
-                container.appendChild(rowContainer);
-            });
-        }
-
-    async function handleMoveButtonClick(floorIndex, direction) {
-        console.log("matrix on click",matrix)
-    const lifts = matrix[0].length;
-    if (queue.length === lifts) {
-        console.log("lift busy",queue,liftsState)
-        return;
-    }
-    let targetFloorIndex = floorIndex;
-
-    let closestLiftIndex = await findClosestAvailableLift(targetFloorIndex);
-
-    if (closestLiftIndex !== -1) {
-        const closestLiftFloor = matrix.findIndex(row => row[closestLiftIndex] === 1);
-
-        await moveLiftSequence(closestLiftFloor, closestLiftIndex, targetFloorIndex);
-    }
-}
-
-async function findClosestAvailableLift(targetFloorIndex) {
-    let closestLiftIndex = -1;
-    let minimumDistance = matrix.length;
-
-    for (let liftIndex = 0; liftIndex < matrix[0].length; liftIndex++) {
-        if (liftsState[liftIndex]) continue;
-
-        let currentHighlightedFloor = matrix.findIndex(row => row[liftIndex] === 1);
-
-        if (currentHighlightedFloor !== -1) {
-            const distance = Math.abs(currentHighlightedFloor - targetFloorIndex);
-            if (distance < minimumDistance) {
-                minimumDistance = distance;
-                closestLiftIndex = liftIndex;
+                    // Mark the elevator as available after the doors have closed
+                    setTimeout(() => {
+                        elevator.busy = false;
+                        elevator.targetFloor = 0
+                    }, 2500); // 2.5 seconds for door closing
+                }, 2500); // 2.5 seconds for door open
             }
         }
-    }
 
-    if (closestLiftIndex !== -1) {
-        liftsState[closestLiftIndex] = true;
-        queue.push(closestLiftIndex);
-    }
-
-    return closestLiftIndex;
-} 
-
-async function moveLiftSequence(fromFloor, liftIndex, toFloor) {
-    await moveLift(fromFloor, liftIndex, toFloor);
-    await openLiftDoors(fromFloor, liftIndex);
-    await closeLiftDoors(fromFloor, liftIndex);
-}
-
-function openLiftDoors(floorIndex, liftIndex) {
-    return new Promise(resolve => {
-        try {
-            console.log("openlift",floorIndex,liftIndex,liftsState,queue)
-        const liftNumber = liftIndex >=matrix[0].length ?liftIndex  : liftIndex + 1
-        const liftElement = document.querySelector(`.row-container:nth-of-type(${floorIndex + 1}) .grid .cell:nth-of-type(${liftNumber}) .highlighted`);
-        liftElement.classList.add('open');
-
-        liftElement.addEventListener('transitionend', () => {
-            liftElement.classList.remove('open');
-            setTimeout(()=>resolve(),2000)
-        }, { once: true });
-        } catch (error) {
-           resetState()
-            console.log("error",error)
-        }
-        
-    });
-}
-
-function closeLiftDoors(floorIndex, liftIndex) {
-    return new Promise(resolve => {
-        //const liftNumber = liftIndex +1 >=matrix[0].length ?0 : liftIndex + 1
-        const liftElement = document.querySelector(`.row-container:nth-of-type(${floorIndex + 1}) .grid .cell:nth-of-type(${liftIndex + 1}) .highlighted`);
-        liftElement.classList.add('close');
-
-        liftElement.addEventListener('transitionend', () => {
-            liftElement.classList.remove('close');
-            liftsState[liftIndex] = false;
-            queue.shift();
-
-            if (queue.length === 0) {
-                matrix = matrix.reverse();
-                console.log("end-matrix",matrix)
-                resetState()
-                createMatrixView();
-            }
-        }, { once: true });
-    });
-}
-
-function moveLift(fromFloor, fromLift, toFloor) {
-    return new Promise(resolve => {
-        if (fromFloor === toFloor) {
-            liftsState[fromLift] = false
-            queue.shift()
-            resolve();
-            return;
-        }
-        try {
-            console.log("movelift",fromFloor,"===>",toFloor,"Lift-",fromLift,queue,liftsState)
-            const fromElement = document.querySelector(`.row-container:nth-of-type(${fromFloor + 1}) .grid .cell:nth-of-type(${fromLift + 1}) .highlighted`);
-            const cellHeight = 120;
-            const distance = Math.abs(toFloor - fromFloor)*2 ?? 2;
-            const floorDistance = (toFloor - fromFloor) * cellHeight;
-            console.log("formElement",fromElement)
-            if(fromElement){
-                fromElement.style.transition = `transform ${distance}s ease`;
-                fromElement.style.transform = `translateY(${floorDistance}px)`;
-                
-                fromElement.addEventListener('transitionend', () => {
-                    const mat = [...matrix]
-                    matrix[toFloor][fromLift] = 1;
-                    matrix[fromFloor][fromLift] = 0;
-                    resolve();
-                }, { once: true });
-            }else{
-                resetState()
-                setTimeout(()=>{
-                    // createMatrixView()
-                    resolve()
-                },1000)
-            }
-        } catch (error) {
-            resetState()
-            console.log("error",error)
-        }
-        
-    });
-}
-
-function resetState(){
-    queue = []
-    for(let l=0;l<matrix[0].length;l++){
-        liftsState[l] = false
-    }
-}
-
-// Initial matrix generation
-generateMatrix();
+        // Initial call to generate the system based on default values
+        generateElevatorSystem();
     </script>
 </body>
 </html>
