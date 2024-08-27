@@ -10,7 +10,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            /* height: 100vh; */
             margin: 0;
             background-color: #f0f0f0;
         }
@@ -20,11 +20,14 @@
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
             width: 900px;
+            overflow: scroll;
+            height: 100vh;
         }
         .elevator-container {
             display: flex;
             align-items: flex-end;
-            
+            /* height: 900px;
+            overflow: scroll; */
         }
         .buttons {
             display: flex;
@@ -98,6 +101,7 @@
             background-color: #f5f5f5;
             padding: 15px;
             border-radius: 5px;
+            width: 600px;
         }
         .controls input {
             width: 150px;
@@ -128,8 +132,8 @@
 <body>
     <div class="elevator-system">
         <div class="controls">
-            <input type="number" id="numFloorsInput" placeholder="Number of Floors" min="1" value="0">
-            <input type="number" id="numLiftsInput" placeholder="Number of Lifts" min="1" value="0">
+            <input type="number" id="numFloorsInput" placeholder="Number of Floors" min="1" value="">
+            <input type="number" id="numLiftsInput" placeholder="Number of Lifts" min="1" value="">
             <button onclick="generateElevatorSystem()">Generate</button>
         </div>
         <div id="elevatorContainer" class="elevator-container">
@@ -142,6 +146,13 @@
         function generateElevatorSystem() {
             const numFloors = parseInt(document.getElementById('numFloorsInput').value);
             const numLifts = parseInt(document.getElementById('numLiftsInput').value);
+
+            // console.log(numFloors,numLifts)
+            if(numFloors < 1 || numLifts < 1 || isNaN(numFloors) || isNaN(numLifts)){
+                alert("No. of floors and lifts should be greater than 0");
+                return;
+            }
+
             const floorHeight = 80;
 
             const elevators = [];
@@ -204,7 +215,7 @@
 
                 const elevatorsOnTargetFloorWithTarget = elevators.filter(e => e.targetFloor === targetFloor)
 
-                if(elevatorsOnTargetFloorWithTarget.length >= 2){
+                if(elevatorsOnTargetFloorWithTarget.length >= 1){
                     return;
                 }
 
