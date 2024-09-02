@@ -148,7 +148,7 @@
             const numLifts = parseInt(document.getElementById('numLiftsInput').value);
 
             // console.log(numFloors,numLifts)
-            if(numFloors < 1 || numLifts < 1 || isNaN(numFloors) || isNaN(numLifts)){
+            if(numFloors < 1 || numLifts < 1 ){
                 alert("No. of floors and lifts should be greater than 0");
                 return;
             }
@@ -156,6 +156,8 @@
             const floorHeight = 80;
 
             const elevators = [];
+            const floorButtonPresses = Array(numFloors).fill().map(() => ({ up: false, down: false }));
+
             const buttonContainers = document.getElementById('floorButtons');
             const shaftsContainer = document.getElementById('elevatorShafts');
 
@@ -176,13 +178,19 @@
                 const upButton = document.createElement('button');
                 upButton.className = 'up-button';
                 upButton.textContent = 'Up';
-                upButton.onclick = () => callElevator(i);
+                upButton.onclick = () => {
+                    floorButtonPresses[i].up = true;
+                    callElevator(i);
+                };
                 floor.appendChild(upButton);
 
                 const downButton = document.createElement('button');
                 downButton.className = 'down-button';
                 downButton.textContent = 'Down';
-                downButton.onclick = () => callElevator(i);
+                downButton.onclick = () => {
+                    floorButtonPresses[i].down = true;
+                    callElevator(i);
+                };
                 floor.appendChild(downButton);
 
                 buttonContainers.appendChild(floor);
@@ -215,11 +223,20 @@
 
                 const elevatorsOnTargetFloorWithTarget = elevators.filter(e => e.targetFloor === targetFloor)
 
-                if(elevatorsOnTargetFloorWithTarget.length >= 1){
-                    return;
+                if(floorButtonPresses[targetFloor].up && floorButtonPresses[targetFloor].down && targetFloor !== 0){
+                    if(elevatorsOnTargetFloorWithTarget.length >= 2){
+                        return;
+                    }   
+                }else{
+                    if(elevatorsOnTargetFloorWithTarget.length >= 1){
+                        return;
+                    }   
                 }
+                
 
-                console.log("targey",targetFloor,elevators,availableElevators,elevatorsOnTargetFloor,elevatorsOnTargetFloorWithTarget)
+//                 console.log("targey",targetFloor,elevators,availableElevators,elevatorsOnTargetFloor,elevatorsOnTargetFloorWithTarget,floorButtonPresses)
+//console.log("floorButtonPresses",floorButtonPresses)
+
 
 
 
@@ -272,6 +289,8 @@
                     setTimeout(() => {
                         elevator.busy = false;
                         elevator.targetFloor = 0
+                        floorButtonPresses[elevator.currentFloor].up = false
+                        floorButtonPresses[elevator.currentFloor].down = false
                     }, 2500); // 2.5 seconds for door closing
                 }, 2500); // 2.5 seconds for door open
             }
