@@ -182,7 +182,7 @@
                     floorButtonPresses[i].up = true;
                     callElevator(i);
                 };
-                floor.appendChild(upButton);
+                if(i !== numFloors-1)floor.appendChild(upButton);
 
                 const downButton = document.createElement('button');
                 downButton.className = 'down-button';
@@ -191,7 +191,7 @@
                     floorButtonPresses[i].down = true;
                     callElevator(i);
                 };
-                floor.appendChild(downButton);
+                if(i !== 0)floor.appendChild(downButton);
 
                 buttonContainers.appendChild(floor);
             }
@@ -223,6 +223,7 @@
 
                 const elevatorsOnTargetFloorWithTarget = elevators.filter(e => e.targetFloor === targetFloor)
 
+                
                 if(floorButtonPresses[targetFloor].up && floorButtonPresses[targetFloor].down && targetFloor !== 0){
                     if(elevatorsOnTargetFloorWithTarget.length >= 2){
                         return;
@@ -234,7 +235,7 @@
                 }
                 
 
-//                 console.log("targey",targetFloor,elevators,availableElevators,elevatorsOnTargetFloor,elevatorsOnTargetFloorWithTarget,floorButtonPresses)
+                // console.log("targey",targetFloor,elevators,availableElevators,elevatorsOnTargetFloor,elevatorsOnTargetFloorWithTarget,floorButtonPresses)
 //console.log("floorButtonPresses",floorButtonPresses)
 
 
@@ -288,7 +289,7 @@
                     // Mark the elevator as available after the doors have closed
                     setTimeout(() => {
                         elevator.busy = false;
-                        elevator.targetFloor = 0
+                        elevator.targetFloor = -1
                         floorButtonPresses[elevator.currentFloor].up = false
                         floorButtonPresses[elevator.currentFloor].down = false
                     }, 2500); // 2.5 seconds for door closing
