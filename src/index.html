@@ -214,7 +214,7 @@
                 shaft.appendChild(elevator);
 
                 shaftsContainer.appendChild(shaft);
-                elevators.push({ element: elevator, currentFloor: 0,targetFloor:0, busy: false });
+                elevators.push({ element: elevator, currentFloor: 0,targetFloor:-1, busy: false });
             }
 
             function callElevator(targetFloor) {
