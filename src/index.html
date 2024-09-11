@@ -40,11 +40,37 @@
             align-items: center;
             margin: 20px 0;
         }
-        .elevator-shafts {
-            display: flex;
-            align-items: flex-end;
-            margin-bottom: 20px;
-        }
+        .floor-divider {
+        width: 100%;
+        height: 2px;
+        background-color: #ccc;
+        margin: 10px 0;
+    }
+    
+    .elevator-shafts {
+        display: flex;
+        align-items: flex-end;
+        margin-bottom: 20px;
+        position: relative;
+        margin-right: 60px;
+    }
+    
+    .floor-lines {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        pointer-events: none;
+    }
+    
+    .floor-line {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background-color: #ccc;
+    }
         .elevator-shaft {
             width: 60px;
             height: 500px;
@@ -56,9 +82,10 @@
             height: 50px;
             background-color: #333;
             position: absolute;
-            bottom: 5px;
+            bottom: 0px;
             left: 5px;
             overflow: hidden;
+            z-index: 1;         
         }
         .elevator .door {
             width: 25px;
@@ -217,6 +244,16 @@
                 elevators.push({ element: elevator, currentFloor: 0,targetFloor:-1, busy: false });
             }
 
+            const floorLines = document.createElement('div');
+        floorLines.className = 'floor-lines';
+        for (let i = 0; i < numFloors; i++) {
+            const floorLine = document.createElement('div');
+            floorLine.className = 'floor-line';
+            floorLine.style.bottom = `${i * floorHeight}px`;
+            floorLines.appendChild(floorLine);
+        }
+        shaftsContainer.appendChild(floorLines);
+
             function callElevator(targetFloor) {
                 const availableElevators = elevators.filter(e => !e.busy);
                 const elevatorsOnTargetFloor = elevators.filter(e => e.currentFloor === targetFloor);
@@ -264,7 +301,7 @@
                 elevator.targetFloor = targetFloor
                 const duration = Math.abs(elevator.currentFloor - targetFloor) * 2; // 2 seconds per floor
                 elevator.element.style.transition = `bottom ${duration}s ease-in-out`;
-                elevator.element.style.bottom = `${targetFloor * floorHeight + 5}px`;
+                elevator.element.style.bottom = `${targetFloor * floorHeight }px`;
 
                 setTimeout(() => {
                     // Elevator reached the target floor
@@ -288,10 +325,12 @@
 
                     // Mark the elevator as available after the doors have closed
                     setTimeout(() => {
-                        elevator.busy = false;
-                        elevator.targetFloor = -1
                         floorButtonPresses[elevator.currentFloor].up = false
                         floorButtonPresses[elevator.currentFloor].down = false
+                        setTimeout(() => {
+                            elevator.busy = false;
+                            elevator.targetFloor = -1
+                        }, 1000);
                     }, 2500); // 2.5 seconds for door closing
                 }, 2500); // 2.5 seconds for door open
             }
