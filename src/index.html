@@ -185,6 +185,9 @@
             const elevators = [];
             const floorButtonPresses = Array(numFloors).fill().map(() => ({ up: false, down: false }));
 
+            // Add a queue for each elevator
+            const elevatorQueues = Array(numLifts).fill().map(() => []);
+
             const buttonContainers = document.getElementById('floorButtons');
             const shaftsContainer = document.getElementById('elevatorShafts');
 
@@ -241,7 +244,7 @@
                 shaft.appendChild(elevator);
 
                 shaftsContainer.appendChild(shaft);
-                elevators.push({ element: elevator, currentFloor: 0,targetFloor:-1, busy: false });
+                elevators.push({ element: elevator, currentFloor: 0,targetFloor:-1, busy: false, queue: [] });
             }
 
             const floorLines = document.createElement('div');
@@ -292,8 +295,33 @@
                         const currentDistance = Math.abs(current.currentFloor - targetFloor);
                         return currentDistance < closestDistance ? current : closest;
                     });
-                    moveElevator(closestElevator, targetFloor);
+                    addToElevatorQueue(closestElevator, targetFloor);
+                } else {
+                    // If no available elevators, add to the queue of the elevator with the shortest queue
+                    const elevatorWithShortestQueue = elevators.reduce((shortest, current) => {
+                        return current.queue.length < shortest.queue.length ? current : shortest;
+                    });
+                    addToElevatorQueue(elevatorWithShortestQueue, targetFloor);
                 }
+            }
+
+            function addToElevatorQueue(elevator, targetFloor) {
+                elevator.queue.push(targetFloor);
+                if (!elevator.busy) {
+                    processElevatorQueue(elevator);
+                }
+            }
+
+            function processElevatorQueue(elevator) {
+                if (elevator.queue.length === 0) {
+                    elevator.busy = false;
+                    elevator.targetFloor = -1;
+                    return;
+                }
+
+                elevator.busy = true;
+                const nextFloor = elevator.queue.shift();
+                moveElevator(elevator, nextFloor);
             }
 
             function moveElevator(elevator, targetFloor) {
@@ -328,8 +356,7 @@
                         floorButtonPresses[elevator.currentFloor].up = false
                         floorButtonPresses[elevator.currentFloor].down = false
                         setTimeout(() => {
-                            elevator.busy = false;
-                            elevator.targetFloor = -1
+                            processElevatorQueue(elevator);
                         }, 1000);
                     }, 2500); // 2.5 seconds for door closing
                 }, 2500); // 2.5 seconds for door open
